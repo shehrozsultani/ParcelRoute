@@ -10,15 +10,30 @@ class DatabaseError(Exception):
     """Raised when MySQL is unreachable or a query fails."""
 
 
+
 def _connect():
-    import pymysql  # imported lazily so tests can run without it
+    import os
+    import pymysql
+
     cfg = current_app.config
-    return pymysql.connect(
-        host=cfg["DB_HOST"], port=cfg["DB_PORT"], user=cfg["DB_USER"],
-        password=cfg["DB_PASSWORD"], database=cfg["DB_NAME"],
-        charset="utf8mb4", cursorclass=pymysql.cursors.DictCursor,
-        connect_timeout=5,
+    ca_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "certs",
+        "ca.pem",
     )
+
+    return pymysql.connect(
+        host=cfg["DB_HOST"],
+        port=cfg["DB_PORT"],
+        user=cfg["DB_USER"],
+        password=cfg["DB_PASSWORD"],
+        database=cfg["DB_NAME"],
+        charset="utf8mb4",
+        cursorclass=pymysql.cursors.DictCursor,
+        connect_timeout=10,
+        ssl={"ca": ca_path},
+    )
+
 
 
 def _run(sql, params=()):
