@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+    <h1>Send it. Follow it. Delivered.</h1>
+    <p class="lead">Book a parcel and follow its journey from origin hub to doorstep, using the live records in our logistics database.</p>
+    <form class="trackbox" action="{{ url_for('main.track') }}" method="get">
+        <label for="tn" class="sr">Tracking number</label>
+        <input id="tn" name="tn" inputmode="numeric" maxlength="9" placeholder="Enter 9-digit tracking number" required>
+        <button class="btn" type="submit">Track parcel</button>
+    </form>
+    {% if samples %}
+        <p class="hint">Sample records from the database: {% for s in samples %}<a href="{{ url_for('main.track', tn=s) }}">{{ s }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+    {% endif %}
+</section>
+<section class="grid3">
+    <div class="card"><h3>Book a parcel</h3><p>Sender, receiver, parcel details and payment in four clear steps.</p><span class="tag">Coming next</span></div>
+    <div class="card"><h3>Track a parcel</h3><p>See every hub scan, the assigned rider and each delivery attempt.</p><a class="link" href="{{ url_for('main.track') }}">Open tracking →</a></div>
+    <div class="card"><h3>Operations</h3><p>Hub, rider and management dashboards built from the same database.</p><span class="tag">Planned</span></div>
+</section>
+{% endblock %}

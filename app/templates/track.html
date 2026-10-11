@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Track a parcel · ParcelRoute{% endblock %}
+{% block content %}
+<section class="trackhead">
+    <h1>Track a parcel</h1>
+    <form class="trackbox" action="{{ url_for('main.track') }}" method="get">
+        <label for="tn" class="sr">Tracking number</label>
+        <input id="tn" name="tn" value="{{ tn }}" inputmode="numeric" maxlength="9" placeholder="9-digit tracking number" required>
+        <button class="btn" type="submit">Track</button>
+    </form>
+</section>
+{% if state == "empty" %}
+    <div class="empty glass"><p>Enter your 9-digit tracking number to see where your parcel is.</p></div>
+{% elif state == "invalid" %}
+    <div class="empty warn glass"><h2>That doesn't look like a tracking number</h2><p>Tracking numbers are 9 digits, for example <strong>100000000</strong>.</p></div>
+{% elif state == "notfound" %}
+    <div class="empty warn glass"><h2>No parcel found</h2><p>No parcel found for tracking number <strong>{{ tn }}</strong>. Please check the number and try again.</p></div>
+{% else %}
+    {% set st = latest.status if latest else None %}
+    <section class="card summary">
+        <div><div class="muted">Tracking number</div><div class="tn">{{ parcel.tracking_number }}</div></div>
+        <div class="summary-right"><span class="badge s-{{ st or 'none' }}">{{ latest.label if latest else 'No events yet' }}</span>{% if latest %}<div class="muted">{{ latest.logged_at | dt }}</div>{% endif %}</div>
+    </section>
+    <section class="card">
+        <h2>Parcel journey</h2>
+        <ol class="stepper">
+            {% for s in stages %}<li class="{{ 'done' if s.done else '' }} {{ 'out-' ~ s.outcome if s.outcome else '' }}"><span class="dot">{% if s.done %}✓{% endif %}</span><span class="lbl">{{ s.label }}</span></li>{% endfor %}
+        </ol>
+        <p class="route"><strong>{{ parcel.origin_hub }}</strong> <span class="muted">({{ parcel.origin_city }})</span> <span class="arrow">→</span> <strong>{{ parcel.dest_hub }}</strong> <span class="muted">({{ parcel.dest_city }})</span></p>
+    </section>
+    <div class="cols">
+        <section class="card">
+            <h2>Shipment details</h2>
+            <dl class="kv">
+                <dt>Booked</dt><dd>{{ parcel.booking_date | dt }}</dd>
+                <dt>Sender</dt><dd>{{ parcel.sender_name }}</dd>
+                <dt>Receiver</dt><dd>{{ parcel.receiver_name }}{% if parcel.receiver_phone_masked %} · {{ parcel.receiver_phone_masked }}{% endif %}</dd>
+                <dt>Deliver to</dt><dd>{{ parcel.recv_line }}, {{ parcel.recv_area }}, {{ parcel.recv_city }}</dd>
+                <dt>Category</dt><dd>{{ parcel.category }}</dd>
+                <dt>Weight</dt><dd>{{ '%.2f' | format(parcel.weight_kg | float) }} kg</dd>
+                <dt>Declared value</dt><dd>{{ parcel.declared_value | money }}</dd>
+                <dt>Order status</dt><dd>{{ parcel.current_status | capitalize }}</dd>
+                {% if payment %}
+                    <dt>Payment</dt><dd>{{ payment.payment_method | replace('_',' ') | upper if payment.payment_method == 'cod' else payment.payment_method | replace('_',' ') | title }} · {{ payment.payment_status | capitalize }}</dd>
+                    {% if parcel.is_cod and payment.cod_amount %}<dt>COD amount</dt><dd>{{ payment.cod_amount | money }}</dd>{% endif %}
+                {% endif %}
+            </dl>
+        </section>
+        <section class="card">
+            <h2>Tracking history</h2>
+            {% if events %}
+                <ol class="timeline">
+                    {% for e in events %}
+                        <li class="ev-{{ e.status }}">
+                            <div class="ev-title">{{ e.label }}</div>
+                            <div class="muted">{{ e.logged_at | dt }} · {{ e.hub_name }}, {{ e.city }}</div>
+                            {% if e.rider_name %}<div class="muted">Rider: {{ e.rider_name }}</div>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% else %}<p class="muted">No tracking events recorded yet.</p>{% endif %}
+        </section>
+    </div>
+    {% if delivery %}
+        <section class="card">
+            <h2>Delivery</h2>
+            <dl class="kv">
+                <dt>Rider</dt><dd>{{ delivery.rider_name }} · {{ delivery.vehicle_type | capitalize }}</dd>
+                <dt>Assigned</dt><dd>{{ delivery.assignment_time | dt }}</dd>
+                <dt>Picked up</dt><dd>{{ delivery.pickup_time | dt }}</dd>
+                <dt>Out for delivery</dt><dd>{{ delivery.out_for_delivery_time | dt }}</dd>
+                <dt>Delivered</dt><dd>{{ delivery.delivery_time | dt if delivery.delivery_time else 'Not delivered' }}</dd>
+                <dt>Attempts</dt><dd>{{ delivery.total_attempts }}</dd>
+            </dl>
+            {% if attempts %}
+                <h3>Delivery attempts</h3>
+                <ul class="attempts">
+                    {% for a in attempts %}
+                        <li class="{{ 'ok' if a.was_successful else 'bad' }}"><strong>Attempt {{ a.attempt_number }}</strong> · {{ a.attempt_datetime | dt }} · {% if a.was_successful %}Delivered{% else %}Not delivered{% if a.failure_reason %} — {{ a.failure_reason }}{% endif %}{% endif %}
+                        {% if a.rider_notes %}<div class="muted">“{{ a.rider_notes }}”</div>{% endif %}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
+    {% endif %}
+    {% if ret %}
+        <section class="card">
+            <h2>Return</h2>
+            <dl class="kv">
+                <dt>Reason</dt><dd>{{ ret.return_reason }}</dd>
+                <dt>Status</dt><dd>{{ ret.return_status | capitalize }}</dd>
+                <dt>Date</dt><dd>{{ ret.return_date | fdate }}</dd>
+            </dl>
+        </section>
+    {% endif %}
+{% endif %}
+{% endblock %}
