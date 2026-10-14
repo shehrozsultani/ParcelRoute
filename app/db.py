@@ -10,30 +10,63 @@ class DatabaseError(Exception):
     """Raised when MySQL is unreachable or a query fails."""
 
 
+def _ssl_options(cfg):
+    import base64
+    import os
+
+    mode = str(cfg.get("DB_SSL_MODE", "disabled")).strip().lower()
+    if mode in {"", "0", "false", "off", "disable", "disabled", "none"}:
+        return None
+
+    ca_path = str(cfg.get("DB_SSL_CA_PATH", "")).strip()
+    if ca_path:
+        if not os.path.exists(ca_path):
+            raise ValueError(f"DB_SSL_CA_PATH does not exist: {ca_path}")
+        return {"ca": ca_path}
+
+    ca_pem = str(cfg.get("DB_SSL_CA_PEM", "")).strip()
+    if ca_pem:
+        ca_file = "/tmp/parcelroute-db-ca.pem"
+        with open(ca_file, "w", encoding="utf-8") as f:
+            f.write(ca_pem)
+        return {"ca": ca_file}
+
+    ca_b64 = str(cfg.get("DB_SSL_CA_BASE64", "")).strip()
+    if ca_b64:
+        try:
+            ca_pem = base64.b64decode(ca_b64, validate=True)
+        except Exception as exc:
+            raise ValueError("DB_SSL_CA_BASE64 is not valid base64") from exc
+        ca_file = "/tmp/parcelroute-db-ca.pem"
+        with open(ca_file, "wb") as f:
+            f.write(ca_pem)
+        return {"ca": ca_file}
+
+    raise ValueError(
+        "DB_SSL_MODE is enabled but no CA was provided. Set DB_SSL_CA_PATH, DB_SSL_CA_PEM, or DB_SSL_CA_BASE64."
+    )
+
 
 def _connect():
-    import os
     import pymysql
 
     cfg = current_app.config
-    ca_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "certs",
-        "ca.pem",
-    )
-
-    return pymysql.connect(
+    connect_kwargs = dict(
         host=cfg["DB_HOST"],
         port=cfg["DB_PORT"],
         user=cfg["DB_USER"],
-        password=cfg["DB_PASSWORD"],
+        passwd=cfg["DB_PASSWORD"],
         database=cfg["DB_NAME"],
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor,
         connect_timeout=10,
-        ssl={"ca": ca_path},
     )
 
+    ssl_opts = _ssl_options(cfg)
+    if ssl_opts:
+        connect_kwargs["ssl"] = ssl_opts
+
+    return pymysql.connect(**connect_kwargs)
 
 
 def _run(sql, params=()):
@@ -45,8 +78,8 @@ def _run(sql, params=()):
             cur.execute(sql, params)
             return list(cur.fetchall())
     except Exception as exc:
-      print(f"DATABASE ERROR: {exc!r}", flush=True)
-      raise DatabaseError(str(exc)) from exc
+        print(f"DATABASE ERROR: {exc!r}", flush=True)
+        raise DatabaseError(str(exc)) from exc
 
 
 def query_all(sql, params=()):

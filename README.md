@@ -19,6 +19,8 @@ The database schema and data are used as-is; this app only **reads** from it so 
    ```
 2. `python -m venv .venv` then activate it, then `pip install -r requirements.txt`
 3. Copy `.env.example` to `.env` and set `DB_PASSWORD`.
+   - Local MySQL: keep `DB_SSL_MODE=disabled`.
+   - Aiven/hosted MySQL: set `DB_SSL_MODE=required` and add one of `DB_SSL_CA_PATH`, `DB_SSL_CA_PEM`, or `DB_SSL_CA_BASE64`.
 4. `python run.py` and open http://127.0.0.1:5000. Try tracking `100000000`.
 
 ## Test
