@@ -10,6 +10,11 @@ def home():
     return render_template("home.html", samples=tracking.sample_tracking_numbers())
 
 
+@main.route("/healthz")
+def healthz():
+    return {"status": "ok"}, 200
+
+
 @main.route("/track")
 def track():
     raw = request.args.get("tn", "").strip()

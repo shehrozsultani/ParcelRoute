@@ -17,6 +17,10 @@ def _ssl_options(cfg):
     mode = str(cfg.get("DB_SSL_MODE", "disabled")).strip().lower()
     if mode in {"", "0", "false", "off", "disable", "disabled", "none"}:
         return None
+    if mode not in {"required", "verify_ca", "verify_identity"}:
+        raise ValueError(
+            "Unsupported DB_SSL_MODE. Use 'disabled' or 'required'."
+        )
 
     ca_path = str(cfg.get("DB_SSL_CA_PATH", "")).strip()
     if ca_path:
@@ -26,9 +30,16 @@ def _ssl_options(cfg):
 
     ca_pem = str(cfg.get("DB_SSL_CA_PEM", "")).strip()
     if ca_pem:
+        ca_pem = ca_pem.replace("\\n", "\n")
+        if "-----BEGIN CERTIFICATE-----" not in ca_pem or "-----END CERTIFICATE-----" not in ca_pem:
+            raise ValueError("DB_SSL_CA_PEM must contain a valid PEM certificate.")
         ca_file = "/tmp/nodetonest-db-ca.pem"
         with open(ca_file, "w", encoding="utf-8") as f:
             f.write(ca_pem)
+        try:
+            os.chmod(ca_file, 0o600)
+        except OSError:
+            pass
         return {"ca": ca_file}
 
     ca_b64 = str(cfg.get("DB_SSL_CA_BASE64", "")).strip()
@@ -37,9 +48,15 @@ def _ssl_options(cfg):
             ca_pem = base64.b64decode(ca_b64, validate=True)
         except Exception as exc:
             raise ValueError("DB_SSL_CA_BASE64 is not valid base64") from exc
+        if b"-----BEGIN CERTIFICATE-----" not in ca_pem or b"-----END CERTIFICATE-----" not in ca_pem:
+            raise ValueError("DB_SSL_CA_BASE64 must decode to a valid PEM certificate.")
         ca_file = "/tmp/nodetonest-db-ca.pem"
         with open(ca_file, "wb") as f:
             f.write(ca_pem)
+        try:
+            os.chmod(ca_file, 0o600)
+        except OSError:
+            pass
         return {"ca": ca_file}
 
     raise ValueError(
@@ -78,7 +95,7 @@ def _run(sql, params=()):
             cur.execute(sql, params)
             return list(cur.fetchall())
     except Exception as exc:
-        print(f"DATABASE ERROR: {exc!r}", flush=True)
+        print(f"DATABASE ERROR: {type(exc).__name__}", flush=True)
         raise DatabaseError(str(exc)) from exc
 
 
