@@ -21,3 +21,8 @@ def track():
     if result is None:
         return render_template("track.html", state="notfound", tn=raw)
     return render_template("track.html", state="found", tn=raw, **result)
+
+
+@main.route("/healthz")
+def healthz():
+    return {"status": "ok"}, 200

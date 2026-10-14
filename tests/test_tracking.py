@@ -91,6 +91,11 @@ class TrackingTests(unittest.TestCase):
         r = self.client.get("/track")
         self.assertIn(b"Enter your 9-digit", r.data)
 
+    def test_healthz_route(self):
+        r = self.client.get("/healthz")
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.get_json(), {"status": "ok"})
+
     def test_receiver_phone_is_masked(self):
         row = self.con.execute(
             "SELECT tracking_number, receiver_phone FROM parcels WHERE receiver_phone IS NOT NULL LIMIT 1").fetchone()

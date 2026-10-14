@@ -13,6 +13,7 @@ class DatabaseError(Exception):
 def _ssl_options(cfg):
     import base64
     import os
+    import stat
 
     mode = str(cfg.get("DB_SSL_MODE", "disabled")).strip().lower()
     if mode in {"", "0", "false", "off", "disable", "disabled", "none"}:
@@ -26,20 +27,38 @@ def _ssl_options(cfg):
 
     ca_pem = str(cfg.get("DB_SSL_CA_PEM", "")).strip()
     if ca_pem:
+        if "\\n" in ca_pem and "\n" not in ca_pem:
+            ca_pem = ca_pem.replace("\\n", "\n")
+        ca_pem = ca_pem.strip() + "\n"
+        if "-----BEGIN CERTIFICATE-----" not in ca_pem or "-----END CERTIFICATE-----" not in ca_pem:
+            raise ValueError("DB_SSL_CA_PEM must contain a complete PEM certificate.")
         ca_file = "/tmp/nodetonest-db-ca.pem"
         with open(ca_file, "w", encoding="utf-8") as f:
             f.write(ca_pem)
+        try:
+            os.chmod(ca_file, stat.S_IRUSR | stat.S_IWUSR)
+        except OSError:
+            pass
         return {"ca": ca_file}
 
     ca_b64 = str(cfg.get("DB_SSL_CA_BASE64", "")).strip()
     if ca_b64:
         try:
-            ca_pem = base64.b64decode(ca_b64, validate=True)
+            ca_pem = base64.b64decode(ca_b64, validate=True).decode("utf-8")
         except Exception as exc:
             raise ValueError("DB_SSL_CA_BASE64 is not valid base64") from exc
+        if "\\n" in ca_pem and "\n" not in ca_pem:
+            ca_pem = ca_pem.replace("\\n", "\n")
+        ca_pem = ca_pem.strip() + "\n"
+        if "-----BEGIN CERTIFICATE-----" not in ca_pem or "-----END CERTIFICATE-----" not in ca_pem:
+            raise ValueError("DB_SSL_CA_BASE64 must decode to a complete PEM certificate.")
         ca_file = "/tmp/nodetonest-db-ca.pem"
-        with open(ca_file, "wb") as f:
+        with open(ca_file, "w", encoding="utf-8") as f:
             f.write(ca_pem)
+        try:
+            os.chmod(ca_file, stat.S_IRUSR | stat.S_IWUSR)
+        except OSError:
+            pass
         return {"ca": ca_file}
 
     raise ValueError(
@@ -65,6 +84,8 @@ def _connect():
     ssl_opts = _ssl_options(cfg)
     if ssl_opts:
         connect_kwargs["ssl"] = ssl_opts
+        connect_kwargs["ssl_verify_cert"] = True
+        connect_kwargs["ssl_verify_identity"] = True
 
     return pymysql.connect(**connect_kwargs)
 
@@ -78,8 +99,8 @@ def _run(sql, params=()):
             cur.execute(sql, params)
             return list(cur.fetchall())
     except Exception as exc:
-        print(f"DATABASE ERROR: {exc!r}", flush=True)
-        raise DatabaseError(str(exc)) from exc
+        current_app.logger.exception("Database query failed")
+        raise DatabaseError("Database query failed") from exc
 
 
 def query_all(sql, params=()):
