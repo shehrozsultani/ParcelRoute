@@ -1,6 +1,6 @@
-# ParcelRoute — Logistics & Last-Mile Parcel Routing web app
+# NodeToNest — Logistics & Last-Mile Parcel Routing web app
 
-Flask + MySQL web application built around the existing `delivery_logistics` database.
+Flask + MySQL web application built around the existing `project` database.
 The database schema and data are used as-is; this app only **reads** from it so far.
 
 ## Status
@@ -12,11 +12,8 @@ The database schema and data are used as-is; this app only **reads** from it so 
 | Dashboard / hubs / riders | Planned |
 
 ## Run it
-1. Create the database and load YOUR dump (the dump begins with `DROP TABLE IF EXISTS`, so use a fresh database):
-   ```
-   mysql -u root -p -e "CREATE DATABASE delivery_logistics CHARACTER SET utf8mb4"
-   mysql -u root -p delivery_logistics < database/delivery_logistics_full_corrected.sql
-   ```
+1. Use your existing MySQL database (`DB_NAME=project`).
+   - Optional for a separate local test database only: load `database/delivery_logistics_full_corrected.sql` into a fresh local DB.
 2. `python -m venv .venv` then activate it, then `pip install -r requirements.txt`
 3. Copy `.env.example` to `.env` and set `DB_PASSWORD`.
    - Local MySQL: keep `DB_SSL_MODE=disabled`.
