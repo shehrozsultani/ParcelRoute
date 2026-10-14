@@ -15,3 +15,9 @@ class Config:
     DB_USER = os.environ.get("DB_USER", "root")
     DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
     DB_NAME = os.environ.get("DB_NAME", "project")
+    # DB_SSL_MODE: disabled (local MySQL), required (Aiven/hosted MySQL with SSL)
+    DB_SSL_MODE = os.environ.get("DB_SSL_MODE", "disabled").strip().lower()
+    # Use ONE of these when SSL is required
+    DB_SSL_CA_PATH = os.environ.get("DB_SSL_CA_PATH", "").strip()
+    DB_SSL_CA_PEM = os.environ.get("DB_SSL_CA_PEM", "").strip()
+    DB_SSL_CA_BASE64 = os.environ.get("DB_SSL_CA_BASE64", "").strip()
