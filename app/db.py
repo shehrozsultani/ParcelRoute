@@ -26,7 +26,7 @@ def _ssl_options(cfg):
 
     ca_pem = str(cfg.get("DB_SSL_CA_PEM", "")).strip()
     if ca_pem:
-        ca_file = "/tmp/parcelroute-db-ca.pem"
+        ca_file = "/tmp/nodetonest-db-ca.pem"
         with open(ca_file, "w", encoding="utf-8") as f:
             f.write(ca_pem)
         return {"ca": ca_file}
@@ -37,7 +37,7 @@ def _ssl_options(cfg):
             ca_pem = base64.b64decode(ca_b64, validate=True)
         except Exception as exc:
             raise ValueError("DB_SSL_CA_BASE64 is not valid base64") from exc
-        ca_file = "/tmp/parcelroute-db-ca.pem"
+        ca_file = "/tmp/nodetonest-db-ca.pem"
         with open(ca_file, "wb") as f:
             f.write(ca_pem)
         return {"ca": ca_file}

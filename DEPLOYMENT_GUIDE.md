@@ -1,6 +1,6 @@
 # DEPLOYMENT_GUIDE
 
-This guide prepares your **existing ParcelRoute** app for a real public URL.
+This guide prepares your **existing NodeToNest** app for a real public URL.
 
 I inspected your full project and made only safe deployment fixes.
 
@@ -64,7 +64,7 @@ Set these in **Render Dashboard → Service → Environment**:
 | `DB_PORT` | `12345` | Yes | From Aiven service |
 | `DB_USER` | `avnadmin` | Yes | From Aiven service |
 | `DB_PASSWORD` | your password | Yes | Keep secret |
-| `DB_NAME` | `delivery_logistics` | Yes | Your database name |
+| `DB_NAME` | `project` | Yes | Your existing database name |
 | `DB_SSL_MODE` | `required` | Yes (Aiven) | Must be `required` for Aiven |
 | `DB_SSL_CA_PEM` | PEM certificate text | Yes (Aiven) | Paste CA cert content directly |
 
@@ -94,9 +94,9 @@ This project now supports `DB_SSL_CA_PEM`, so you do not need local certificate 
 1. Log in to Render.
 2. Click **New +** → **Web Service**.
 3. Connect your GitHub account (if not connected yet).
-4. Select repo: `shehrozsultani/ParcelRoute`.
+4. Select repo: `shehrozsultani/ParcelRoute` (repo name stays unchanged).
 5. Configure service:
-   - **Name:** `parcelroute` (or any name)
+   - **Name:** `nodetonest` (or any name)
    - **Runtime:** Python
    - **Branch:** your deployment branch
    - **Build Command:**
@@ -139,14 +139,14 @@ You asked for exact PowerShell commands. Use these only if needed.
 
 ## Optional: run tests locally before/after deploy
 ```powershell
-cd C:\path\to\ParcelRoute
+cd C:\path\to\NodeToNest
 python -m pip install -r requirements.txt
 python -m unittest tests.test_tracking
 ```
 
 ## Optional: quick local run
 ```powershell
-cd C:\path\to\ParcelRoute
+cd C:\path\to\NodeToNest
 python run.py
 ```
 Then open `http://127.0.0.1:5000`
