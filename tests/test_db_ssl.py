@@ -26,7 +26,8 @@ class SSLConfigTests(unittest.TestCase):
         cfg = {"DB_SSL_MODE": "required", "DB_SSL_CA_PEM": pem}
         opts = db._ssl_options(cfg)
         self.assertEqual(opts, {"ca": "/tmp/nodetonest-db-ca.pem"})
-        content = open("/tmp/nodetonest-db-ca.pem", "r", encoding="utf-8").read()
+        with open("/tmp/nodetonest-db-ca.pem", "r", encoding="utf-8") as f:
+            content = f.read()
         self.assertEqual(content, "-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----\n")
         if os.name == "posix":
             mode = stat.S_IMODE(os.stat("/tmp/nodetonest-db-ca.pem").st_mode)
