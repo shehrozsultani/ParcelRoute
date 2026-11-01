@@ -18,7 +18,25 @@ The database schema and data are used as-is; this app only **reads** from it so 
 3. Copy `.env.example` to `.env` and set `DB_PASSWORD`.
    - Local MySQL: keep `DB_SSL_MODE=disabled`.
    - Aiven/hosted MySQL: set `DB_SSL_MODE=required` and add one of `DB_SSL_CA_PATH`, `DB_SSL_CA_PEM`, or `DB_SSL_CA_BASE64`.
+   - Set `APP_ENV=development` for local development. Production must use `APP_ENV=production`.
+   - Set a strong `SECRET_KEY` (32+ random characters). The app rejects weak/default production secrets.
 4. `python run.py` and open http://127.0.0.1:5000. Try tracking `100000000`.
+
+## Authentication and RBAC (Phase 1)
+- Login route: `/login`
+- Logout route: `POST /logout`
+- Protected routes:
+  - `/ops` (roles: `ops`, `admin`)
+  - `/admin` (role: `admin`)
+- Public tracking remains open (`/`, `/track`, `/healthz`).
+
+### Provisioning the first administrator safely
+1. Initialize auth schema:
+   - `flask --app run.py init-auth-schema`
+2. Create first admin user (password prompt is hidden; no plaintext stored):
+   - `flask --app run.py create-admin --username your_admin --role admin`
+
+Passwords are stored as hashes only (`werkzeug.security`), never plaintext.
 
 ## Test
 `python -m unittest tests.test_tracking` — loads your SQL dump into an in-memory SQLite copy, so no MySQL is needed.

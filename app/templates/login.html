@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Login · NodeToNest{% endblock %}
+{% block content %}
+<section class="card auth-card">
+    <h1>Sign in</h1>
+    <p class="muted">Authorized users only.</p>
+    {% if error %}<p class="error-text">{{ error }}</p>{% endif %}
+    <form action="{{ url_for('auth.login') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <p>
+            <label for="username">Username</label><br>
+            <input id="username" name="username" maxlength="64" autocomplete="username" required>
+        </p>
+        <p>
+            <label for="password">Password</label><br>
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </p>
+        <button class="btn" type="submit">Login</button>
+    </form>
+</section>
+{% endblock %}

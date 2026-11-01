@@ -60,6 +60,8 @@ Set these in **Render Dashboard → Service → Environment**:
 | Variable | Example | Required | Notes |
 |---|---|---|---|
 | `SECRET_KEY` | long random string | Yes | Flask secret |
+| `APP_ENV` | `production` | Yes | Enables production security checks |
+| `SESSION_LIFETIME_MINUTES` | `60` | Recommended | Session lifetime for authenticated users |
 | `DB_HOST` | `mysql-xxxx.aivencloud.com` | Yes | From Aiven service |
 | `DB_PORT` | `12345` | Yes | From Aiven service |
 | `DB_USER` | `avnadmin` | Yes | From Aiven service |
@@ -69,6 +71,13 @@ Set these in **Render Dashboard → Service → Environment**:
 | `DB_SSL_CA_PEM` | PEM certificate text | Yes (Aiven) | Paste CA cert content directly |
 
 Do **not** set `DB_SSL_CA_PATH` unless you also manage that file path on host.
+
+### Authentication provisioning (after deploy)
+Run these once against your configured environment:
+1. `flask --app run.py init-auth-schema`
+2. `flask --app run.py create-admin --username <admin_username> --role admin`
+
+The CLI prompts for password securely and stores only a password hash.
 
 ---
 
